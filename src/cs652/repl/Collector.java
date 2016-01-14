@@ -16,7 +16,7 @@ public class Collector {
 	public static void println(Object o) {
 		String output = o.toString();
 		Collector.output.append(output+"\n");
-		System.out.print(output);
+		System.out.println(output);
 	}
 	public static String getErrors() { return errors.toString(); }
 	public static String getText() { return output.toString(); }
