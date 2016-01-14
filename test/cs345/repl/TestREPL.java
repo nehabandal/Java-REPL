@@ -1,4 +1,4 @@
-package cs345.repl;
+package cs652.repl;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
