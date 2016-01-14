@@ -6,7 +6,7 @@
 		<version>9</version>
 	</parent>
 
-	<groupId>edu.usfca.cs345</groupId>
+	<groupId>edu.usfca.cs652</groupId>
 	<artifactId>repl</artifactId>
 	<packaging>jar</packaging>
 
