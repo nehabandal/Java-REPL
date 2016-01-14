@@ -1,5 +1,6 @@
 package cs652.repl;
 
+/** Support code used during execution of the generated code. */
 public class Collector {
 	public static StringBuilder output = new StringBuilder();
 	public static StringBuilder errors = new StringBuilder();
