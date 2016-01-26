@@ -1,5 +1,7 @@
 package cs652.repl;
 
+import java.io.IOException;
+
 public class JavaREPL {
 	public static void main(String[] args) throws IOException {
 		exec(new InputStreamReader(System.in));
