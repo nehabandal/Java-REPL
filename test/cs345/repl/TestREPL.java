@@ -1,4 +1,4 @@
-package cs345.repl;
+package cs652.repl;
 
 import org.junit.After;
 import org.junit.Before;
