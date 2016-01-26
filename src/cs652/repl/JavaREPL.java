@@ -5,7 +5,7 @@ public class JavaREPL {
 		exec(new InputStreamReader(System.in));
 	}
 
-	public static String[] exec(Reader r) throws IOException {
+	public static void exec(Reader r) throws IOException {
 		BufferedReader stdin = new BufferedReader(r);
 		NestedReader reader = new NestedReader(stdin);
 		int classNumber = 0;
