@@ -1,11 +1,15 @@
-package cs652.repl;
+package cs345.repl;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.StringReader;
 import java.net.URL;
 import java.nio.file.Files;
@@ -24,17 +28,41 @@ public class TestREPL {
 	protected String input;
 	protected String expectedOutput;
 
+	protected PrintStream save_stdout;
+	protected PrintStream save_stderr;
+
+	protected ByteArrayOutputStream stdout;
+	protected ByteArrayOutputStream stderr;
+
 	public TestREPL(String filename, String input, String expectedOutput) {
 		this.filename = filename;
 		this.expectedOutput = expectedOutput;
 		this.input = input;
 	}
 
+	@Before
+	public void setup() {
+		save_stdout = System.out;
+		save_stderr = System.err;
+		stdout = new ByteArrayOutputStream();
+		stderr = new ByteArrayOutputStream();
+		System.setOut(new PrintStream(stdout));
+		System.setErr(new PrintStream(stderr));
+	}
+
+	@After
+	public void teardown() {
+		System.setOut(save_stdout);
+		System.setErr(save_stderr);
+	}
+
 	@Test
 	public void testInputOutputPair() throws IOException {
-		String[] results = JavaREPL.exec(new StringReader(input));
+		JavaREPL.exec(new StringReader(input));
 		// combine errors first then output
-		assertEquals(expectedOutput, results[1]+results[0]);
+		String output = stdout.toString();
+		output = output.replaceAll("> ", ""); // kill the prompt from output
+		assertEquals(expectedOutput, output+stderr.toString());
 	}
 
 	@Parameterized.Parameters(name="{0}:{1}")
