@@ -14,13 +14,14 @@ public class JavaREPL {
         BufferedReader stdin = new BufferedReader(r);
         NestedReader reader = new NestedReader(stdin);
         int classNumber = 0;
-
+        System.out.print("> ");
 //                Class.forName("Interp_0").newInstance()
         while (true) {
-            System.out.print("> ");
-            String java = reader.getNestedString();
-//            System.out.println(java);
 
+            String java = reader.getNestedString();
+
+            System.out.println(java);
+            System.out.print("> ");
 
             // TODO
         }
