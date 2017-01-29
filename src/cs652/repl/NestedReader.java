@@ -15,16 +15,18 @@ public class NestedReader {
 
     public NestedReader(BufferedReader input) {
         this.input = input;
+
     }
 
     public String getNestedString() throws IOException {
-
-
-        while ((c = input.read()) != ';') {
-            buf.append((char) c);
+        StringBuilder buf1 = new StringBuilder();
+        while ((c = input.read()) != '\n') {
+            buf1.append((char) c);
         }
-        String inputString = buf.toString() + ";";
-//                  System.out.println(buf.toString());
+
+        String inputString = buf1.toString();
+//        buf.setLength(0);
+
 //        while((c=input.read())!= -1)
 //        {
 //            switch (c) {
