@@ -21,6 +21,9 @@ public class JavaREPL {
     public static final String PACKAGE_NAME = "repl.generated";
 
     private static int classNumber = 0;
+    private static int count = 0;
+    private static DiagnosticCollector<JavaFileObject> diag;
+
 
     public static void main(String[] args) throws IOException {
         exec(new InputStreamReader(System.in));
@@ -30,6 +33,7 @@ public class JavaREPL {
         ClassLoader classLoader = new URLClassLoader(new URL[]{new File(GEN_OUT_PATH).toURI().toURL()});
         BufferedReader stdin = new BufferedReader(r);
         NestedReader reader = new NestedReader(stdin);
+
         while (true) {
             try {
                 System.out.print("> ");
@@ -41,6 +45,8 @@ public class JavaREPL {
                 if (!success) {
                     sourceFile = generateJavaSource(null, code);
                     success = compile(sourceFile);
+                    if (!success)
+                        sysError(sourceFile);
                 }
                 // Load and instantiate compiled class.
                 if (success) {
@@ -53,6 +59,22 @@ public class JavaREPL {
                 e.printStackTrace();
             }
         }
+    }
+
+    private static void sysError(File sourceFile) throws IOException {
+
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+        StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, null);
+        Iterable<? extends JavaFileObject> compilationUnits = fileManager
+                .getJavaFileObjectsFromStrings(Arrays.asList(sourceFile.getAbsolutePath()));
+        compiler.getTask(null, fileManager, diagnostics, null,
+                null, compilationUnits).call();
+//        fileManager.close();
+        for (Diagnostic<?> diagnostic : diagnostics.getDiagnostics()) {
+            System.err.format("line %d: %s\n", diagnostic.getLineNumber(), diagnostic.getMessage(null));
+        }
+
     }
 
     private static String getClassName(int n) {
@@ -108,13 +130,9 @@ public class JavaREPL {
                 null, compilationUnits);
         final boolean success = task.call();
         fileManager.close();
-        if (!success) {
-            for (Diagnostic<?> diagnostic : diagnostics.getDiagnostics()) {
-                System.err.format("Error on line %d in %s\n", diagnostic.getPosition(), diagnostic.getCode());
-            }
-        }
         return success;
     }
+
 
     private static void execute(ClassLoader classLoader, String classRef)
             throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
@@ -122,5 +140,7 @@ public class JavaREPL {
         Method exec = cl.getDeclaredMethod("exec");
         exec.invoke(null);
     }
+
+
 }
 
