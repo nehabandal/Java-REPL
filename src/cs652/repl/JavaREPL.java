@@ -4,8 +4,9 @@ import com.sun.source.util.JavacTask;
 
 import javax.tools.*;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URI;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
@@ -15,92 +16,111 @@ import java.util.Arrays;
 import java.util.List;
 
 public class JavaREPL {
-
     public static final String GEN_SRC_PATH = "/tmp/repl/java/gen";
     public static final String GEN_OUT_PATH = "/tmp/repl/java/out";
+    public static final String PACKAGE_NAME = "repl.generated";
+
+    private static int classNumber = 0;
 
     public static void main(String[] args) throws IOException {
         exec(new InputStreamReader(System.in));
     }
 
     public static void exec(Reader r) throws IOException {
+        ClassLoader classLoader = new URLClassLoader(new URL[]{new File(GEN_OUT_PATH).toURI().toURL()});
         BufferedReader stdin = new BufferedReader(r);
         NestedReader reader = new NestedReader(stdin);
-        int classNumber = 0;
-
         while (true) {
             try {
                 System.out.print("> ");
-                String java = reader.getNestedString();
-                String srccode = "package test;\n" +
-                        "public class Interp_0 {\n" +
-                        "    //    public static void f() { System.out.println(i); }\n" +
-                        "    public static void exec() {\n" +
-                        java +
-                        "    }\n" +
-                        "}\n" +
-                        "\n" +
-                        "\n";
-
-                // Save source in .java file.
-                File sourceFile = new File(GEN_SRC_PATH, "Interp_0.java");
-                sourceFile.getParentFile().mkdirs();
-                new File(GEN_OUT_PATH).mkdirs();
-                Files.write(sourceFile.toPath(), srccode.getBytes(StandardCharsets.UTF_8));
+                String code = reader.getNestedString();
+                File sourceFile = generateJavaSource(code, null);
 
                 // Compile source file.
-                JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-//                compiler.run(null, null, null, sourceFile.getPath());
-
-
-//                JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-                DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-                StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, null);
-                Iterable<? extends JavaFileObject> compilationUnits = fileManager
-                        .getJavaFileObjectsFromStrings(Arrays.asList(sourceFile.getAbsolutePath()));
-                List<String> options=new ArrayList<String>();
-                options.add("-sourcepath");
-                options.add(GEN_SRC_PATH);
-                options.add("-d");
-                options.add(GEN_OUT_PATH);
-                JavacTask task = (JavacTask) compiler.getTask(null, fileManager, diagnostics, options,
-                        null, compilationUnits);
-                boolean success = task.call();
-                fileManager.close();
-//                System.out.println("Success: " + success);
+                boolean success = compile(sourceFile);
                 if (!success) {
-                    for (Diagnostic<?> diagnostic : diagnostics.getDiagnostics()) {
-                        System.err.format("Error on line %d in %s", diagnostics.getDiagnostics(), diagnostics);
-                    }
-                    throw new IOException("Could not compile project");
+                    sourceFile = generateJavaSource(null, code);
+                    success = compile(sourceFile);
+                }
+                // Load and instantiate compiled class.
+                if (success) {
+                    String classname = getCurrentClassName();
+                    classNumber++;
+                    execute(classLoader, classname);
                 }
 
-                // Load and instantiate compiled class.
-                URL tmpURL = new File(GEN_OUT_PATH).toURI().toURL();
-                ClassLoader loader = new URLClassLoader(new URL[]{tmpURL});
-                Class cl = loader.loadClass("test.Interp_0");
-                Method exec = cl.getDeclaredMethod("exec");
-                exec.invoke(null);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-
-
     }
 
-}
-class JavaSourceFromString extends SimpleJavaFileObject {
-    final String code;
-
-    JavaSourceFromString(String name, String code) {
-        super(URI.create("string:///" + name.replace('.','/') + Kind.SOURCE.extension),Kind.SOURCE);
-        this.code = code;
+    private static String getClassName(int n) {
+        return String.format("Interp_%02d", n);
     }
 
-    @Override
-    public CharSequence getCharContent(boolean ignoreEncodingErrors) {
-        return code;
+    private static String getCurrentClassName() {
+        return getClassName(classNumber);
+    }
+
+    private static File generateJavaSource(String def, String stat) throws IOException {
+
+        String className = getCurrentClassName();
+        String extendSuper = classNumber != 0 ? getClassName(classNumber - 1) : null;
+
+        String code = getCode(className, extendSuper, def, stat);
+
+        // Save source in .java file.
+        File sourceFile = new File(GEN_SRC_PATH, className + ".java");
+        sourceFile.getParentFile().mkdirs();
+        new File(GEN_OUT_PATH).mkdirs();
+        Files.write(sourceFile.toPath(), code.getBytes(StandardCharsets.UTF_8));
+        return sourceFile;
+    }
+
+    public static String getCode(String className, String extendSuper, String def, String stat) {
+        return String.format(
+                "public class %s %s {\n" +
+                        "    %s\n" +
+                        "    public static void exec() {\n" +
+                        "        %s\n" +
+                        "    }\n" +
+                        "}\n",
+                className,
+                (extendSuper != null ? "extends " + extendSuper : ""),
+                def == null ? "" : "public static " + def,
+                stat == null ? "" : stat
+        );
+    }
+
+    private static boolean compile(File sourceFile) throws IOException {
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+        StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, null);
+        Iterable<? extends JavaFileObject> compilationUnits = fileManager
+                .getJavaFileObjectsFromStrings(Arrays.asList(sourceFile.getAbsolutePath()));
+        List<String> options = new ArrayList<>();
+        options.add("-sourcepath");
+        options.add(GEN_SRC_PATH);
+        options.add("-d");
+        options.add(GEN_OUT_PATH);
+        JavacTask task = (JavacTask) compiler.getTask(null, fileManager, diagnostics, options,
+                null, compilationUnits);
+        final boolean success = task.call();
+        fileManager.close();
+        if (!success) {
+            for (Diagnostic<?> diagnostic : diagnostics.getDiagnostics()) {
+                System.err.format("Error on line %d in %s\n", diagnostic.getPosition(), diagnostic.getCode());
+            }
+        }
+        return success;
+    }
+
+    private static void execute(ClassLoader classLoader, String classRef)
+            throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        Class cl = classLoader.loadClass(classRef);
+        Method exec = cl.getDeclaredMethod("exec");
+        exec.invoke(null);
     }
 }
 
