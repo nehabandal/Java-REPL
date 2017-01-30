@@ -101,8 +101,8 @@ public class JavaREPL {
     }
 
     public static String getCode(String className, String extendSuper, String def, String stat) {
-        return String.format(
-                "public class %s %s {\n" +
+        return String.format("import java.util.*;\n" +
+                        "public class %s %s {\n" +
                         "    %s\n" +
                         "    public static void exec() {\n" +
                         "        %s\n" +
