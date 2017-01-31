@@ -23,34 +23,47 @@ public class NestedReader {
         buf.setLength(0);
         String inputString;
         Stack<Character> stack = new Stack<>();
-        while ((c = input.read()) != '\n') {
-//            switch (c) {
-//                case '{':
-//                    while (c != '}') {
-//                        consume();
+        c = input.read();
+        while (true) {
+            //                consume();
+            if ((c != '\n'))
+                switch (c) {
+                    case '{':
+                        stack.push((char) c);
+                        while (!stack.empty()) {
+                            consume();
+                            if (c == '{' || c == '(' || c == '[')
+                                stack.push((char) c);
+                            if (c == '}' || c == ')' || c == ']')
+                                stack.pop();
+                        }
+//                    case '(':
 //                        stack.push((char) c);
-//                    }
-//                    while (!stack.empty()) {
-//                        if (stack.peek() == '}' && c != '{') {
-//                            buf.append(stack.pop());
+//                        while (!stack.empty()) {
+//                            consume();
+//                            if (c == '{' || c == '(' || c == '[')
+//                                stack.push((char) c);
+//                            if (c == '}' || c == ')' || c == ']')
+//                                stack.pop();
 //                        }
-//                    }
-//                    System.out.println(stack.peek());
-//                case '}':
-//                    if(stack.empty())
-//                        return null ;
-//                    else if(stack.peek() == '{') {
-//                        buf.append((char) c);
-//                        stack.pop();
-//                    }
-//                    else
-//                        return null;
-
-//            }
-            buf.append((char) c);
-
+////                    case '[':
+//                        stack.push((char) c);
+//                        while (!stack.empty()) {
+//                            consume();
+//                            if (c == '{' || c == '(' || c == '[')
+//                                stack.push((char) c);
+//                            if (c == '}' || c == ')' || c == ']')
+//                                stack.pop();
+//                        }
+                    default:
+                        consume();
+                }
+            else {
+                break;
+            }
         }
-
+        System.out.println(input.toString());
+//        System.out.println(stack.toString());
         inputString = buf.toString();
         Pattern p = Pattern.compile("(print)[^a-zA-Z](.*);");
         String input = inputString;
@@ -66,38 +79,8 @@ public class NestedReader {
 
     }
 
-
     void consume() throws IOException {
         buf.append((char) c);
-        c = System.in.read();
-//        while (c != '}') {
-//            buf.append((char) c);
-//            c = System.in.read();
-//        }
+        c = input.read();
     }
 }
-/*
-   while (true) {
-                c=input.read();
-                System.out.println("c=" + (char) c);
-            switch (c) {
-                case '{':
-                    while (c != '}') {
-                        consume();
-                    }
-                    stack.push((char) c);
-                case '}':
-                    char d = stack.pop();
-                    if ((char) c == d && stack.empty()) {
-                        return buf.toString();
-                    }
-                default:
-                    consume();
-
-
-            }
-                System.out.println(buf.toString());
-            return buf.toString();
-        }
-
- */
