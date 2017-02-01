@@ -40,10 +40,9 @@ public class JavaREPL {
             try {
                 System.out.print("> ");
                 String code = reader.getNestedString();
-                if(code==null)
+                if (code == null)
                     break;
                 code = printParsing(code);
-//                System.out.println(code);
                 File sourceFile = generateJavaSource(code, null);
 
                 // Compile source file.
@@ -97,7 +96,6 @@ public class JavaREPL {
         String extendSuper = classNumber != 0 ? getClassName(classNumber - 1) : null;
 
         String code = getCode(className, extendSuper, def, stat);
-//        System.out.println(code);
 
         // Save source in .java file.
         File sourceFile = new File(GEN_SRC_PATH, className + ".java");
@@ -108,7 +106,7 @@ public class JavaREPL {
     }
 
     public static String getCode(String className, String extendSuper, String def, String stat) {
-        return String.format("\nimport java.util.*;\n"+
+        return String.format("\nimport java.util.*;\n" +
                         "import java.util.*;\n" +
                         "public class %s %s {\n" +
                         "    %s\n" +
@@ -150,6 +148,8 @@ public class JavaREPL {
     }
 
     private static String printParsing(String inputString) {
+        inputString = inputString.replaceAll("[\\t\\n\\r]"," ");
+//        System.out.println(inputString);
         Pattern p = Pattern.compile("(print[^a-zA-Z])(.*);");
         String input = inputString;
 //        System.out.println(input);

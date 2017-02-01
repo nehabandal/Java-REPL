@@ -43,6 +43,14 @@ public class NestedReader {
                 case ']':
                     if (getBracket(stack)) return buf.toString();
                     break;
+                case '/':
+                    c = input.read();
+                    if (c == '/') {
+                        while (c != '\n')
+                            c = input.read();
+                    } else
+                        consume();
+                    break;
                 case -1:
                     return null;
                 case '\n':
@@ -66,7 +74,7 @@ public class NestedReader {
     }
 
     void consume() throws IOException {
-        buf.append((char) c);//if(4<5) {
-        c = input.read();//){
+        buf.append((char) c);
+        c = input.read();
     }
 }
