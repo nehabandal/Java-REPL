@@ -11,7 +11,7 @@ public class NestedReader {
     StringBuilder buf = new StringBuilder();    // fill this as you process, character by character
     BufferedReader input; // where are we reading from?
     int c; // current character of lookahead; reset upon each getNestedString() call
-    Stack<Character> stack = new Stack<>();
+
 
     public NestedReader(BufferedReader input) {
         this.input = input;
@@ -20,6 +20,7 @@ public class NestedReader {
     public String getNestedString() throws IOException {
         buf.setLength(0);
         c = input.read();
+        Stack<Character> stack = new Stack<>();
         while (true) {
             switch (c) {
                 case '{':
