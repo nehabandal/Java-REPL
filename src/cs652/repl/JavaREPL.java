@@ -14,6 +14,8 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class JavaREPL {
     public static final String GEN_SRC_PATH = "/tmp/repl/java/gen";
@@ -38,6 +40,10 @@ public class JavaREPL {
             try {
                 System.out.print("> ");
                 String code = reader.getNestedString();
+                if(code==null)
+                    break;
+                code = printParsing(code);
+//                System.out.println(code);
                 File sourceFile = generateJavaSource(code, null);
 
                 // Compile source file.
@@ -54,11 +60,11 @@ public class JavaREPL {
                     classNumber++;
                     execute(classLoader, classname);
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+
     }
 
     private static void sysError(File sourceFile) throws IOException {
@@ -91,6 +97,7 @@ public class JavaREPL {
         String extendSuper = classNumber != 0 ? getClassName(classNumber - 1) : null;
 
         String code = getCode(className, extendSuper, def, stat);
+//        System.out.println(code);
 
         // Save source in .java file.
         File sourceFile = new File(GEN_SRC_PATH, className + ".java");
@@ -101,7 +108,8 @@ public class JavaREPL {
     }
 
     public static String getCode(String className, String extendSuper, String def, String stat) {
-        return String.format("import java.util.*;\n" +
+        return String.format("\nimport java.util.*;\n"+
+                        "import java.util.*;\n" +
                         "public class %s %s {\n" +
                         "    %s\n" +
                         "    public static void exec() {\n" +
@@ -141,6 +149,17 @@ public class JavaREPL {
         exec.invoke(null);
     }
 
+    private static String printParsing(String inputString) {
+        Pattern p = Pattern.compile("(print[^a-zA-Z])(.*);");
+        String input = inputString;
+//        System.out.println(input);
+        Matcher m = p.matcher(input);
+        if (m.find()) {
+            input = m.replaceFirst("System.out.println");  // number 46
+            inputString = input + "(" + m.group(2) + ");";
+        }
+        return inputString;
+    }
 
 }
 
