@@ -19,32 +19,33 @@ import java.util.regex.Pattern;
 
 import static java.lang.System.exit;
 
+
 public class JavaREPL {
     public static final String GEN_SRC_PATH = "/tmp/repl/java/gen";
     public static final String GEN_OUT_PATH = "/tmp/repl/java/out";
-    public static final String PACKAGE_NAME = "repl.generated";
-
     private static int classNumber = 0;
-    private static int count = 0;
-    private static DiagnosticCollector<JavaFileObject> diag;
-
 
     public static void main(String[] args) throws IOException {
         exec(new InputStreamReader(System.in));
     }
 
+    /**
+     * Execution Method includes complete process
+     *
+     * @param r
+     * @throws IOException
+     */
     public static void exec(Reader r) throws IOException {
         ClassLoader classLoader = new URLClassLoader(new URL[]{new File(GEN_OUT_PATH).toURI().toURL()});
         BufferedReader stdin = new BufferedReader(r);
         NestedReader reader = new NestedReader(stdin);
-
         while (true) {
             try {
                 System.out.print("> ");
                 String code = reader.getNestedString();
                 if (code == null)
                     break;
-                if(code.equals("^D"))
+                if (code.equals("^D"))
                     exit(0);
                 code = printParsing(code);
                 File sourceFile = generateJavaSource(code, null);
@@ -70,6 +71,12 @@ public class JavaREPL {
 
     }
 
+    /**
+     * Handelling errors
+     *
+     * @param sourceFile
+     * @throws IOException
+     */
     private static void sysError(File sourceFile) throws IOException {
 
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
@@ -79,21 +86,40 @@ public class JavaREPL {
                 .getJavaFileObjectsFromStrings(Arrays.asList(sourceFile.getAbsolutePath()));
         compiler.getTask(null, fileManager, diagnostics, null,
                 null, compilationUnits).call();
-//        fileManager.close();
+        fileManager.close();
         for (Diagnostic<?> diagnostic : diagnostics.getDiagnostics()) {
             System.err.format("line %d: %s\n", diagnostic.getLineNumber(), diagnostic.getMessage(null));
         }
 
     }
 
+    /**
+     * getting classNames
+     *
+     * @param n
+     * @return
+     */
     private static String getClassName(int n) {
         return String.format("Interp_%02d", n);
     }
 
+    /**
+     * getting current class name from class number
+     *
+     * @return
+     */
     private static String getCurrentClassName() {
         return getClassName(classNumber);
     }
 
+    /**
+     * Generating source Java code for compilation
+     *
+     * @param def
+     * @param stat
+     * @return
+     * @throws IOException
+     */
     private static File generateJavaSource(String def, String stat) throws IOException {
 
         String className = getCurrentClassName();
@@ -109,6 +135,15 @@ public class JavaREPL {
         return sourceFile;
     }
 
+    /**
+     * Generating Java source code for compilation
+     *
+     * @param className
+     * @param extendSuper
+     * @param def
+     * @param stat
+     * @return
+     */
     public static String getCode(String className, String extendSuper, String def, String stat) {
         return String.format("\nimport java.util.*;\n" +
                         "import java.util.*;\n" +
@@ -125,6 +160,13 @@ public class JavaREPL {
         );
     }
 
+    /**
+     * Compilation will be performed here with JavaCompiler
+     *
+     * @param sourceFile
+     * @return
+     * @throws IOException
+     */
     private static boolean compile(File sourceFile) throws IOException {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
@@ -143,6 +185,18 @@ public class JavaREPL {
         return success;
     }
 
+    /**
+     * Execution of Java compiled code
+     * Java Reflection
+     *
+     * @param classLoader
+     * @param classRef
+     * @throws MalformedURLException
+     * @throws ClassNotFoundException
+     * @throws NoSuchMethodException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     */
 
     private static void execute(ClassLoader classLoader, String classRef)
             throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
@@ -151,12 +205,16 @@ public class JavaREPL {
         exec.invoke(null);
     }
 
+    /**
+     * Converting print to System.out.println
+     *
+     * @param inputString
+     * @return
+     */
     private static String printParsing(String inputString) {
-        inputString = inputString.replaceAll("[\\t\\n\\r]"," ");
-//        System.out.println(inputString);
+        inputString = inputString.replaceAll("[\\t\\n\\r]", " ");
         Pattern p = Pattern.compile("(print[^a-zA-Z])(.*);");
         String input = inputString;
-//        System.out.println(input);
         Matcher m = p.matcher(input);
         if (m.find()) {
             input = m.replaceFirst("System.out.println");  // number 46

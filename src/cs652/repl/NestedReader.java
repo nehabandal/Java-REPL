@@ -6,17 +6,24 @@ import java.util.Stack;
 
 /**
  * Created by npbandal on 1/25/17.
+ * Parsing is done here
  */
 public class NestedReader {
     StringBuilder buf = new StringBuilder();    // fill this as you process, character by character
     BufferedReader input; // where are we reading from?
     int c; // current character of lookahead; reset upon each getNestedString() call
 
-
     public NestedReader(BufferedReader input) {
         this.input = input;
     }
 
+    /**
+     * Methode for generating input string for java source code
+     * Includes Nested Strings
+     *
+     * @return
+     * @throws IOException
+     */
     public String getNestedString() throws IOException {
         buf.setLength(0);
         c = input.read();
@@ -92,6 +99,11 @@ public class NestedReader {
         return false;
     }
 
+    /**
+     * Method consumes one character and set lookahead character
+     *
+     * @throws IOException
+     */
     void consume() throws IOException {
         buf.append((char) c);
         c = input.read();
