@@ -24,16 +24,25 @@ public class NestedReader {
         while (true) {
             switch (c) {
                 case '{':
-                    stack.push('}');
                     consume();
+                    if (c == '\"' || c == '\'') {
+                        fetchTillEnd();
+                    } else
+                        stack.push('}');
                     break;
                 case '(':
-                    stack.push(')');
                     consume();
+                    if (c == '\"' || c == '\'') {
+                        fetchTillEnd();
+                    } else
+                        stack.push(')');
                     break;
                 case '[':
-                    stack.push(']');
                     consume();
+                    if (c == '\"' || c == '\'') {
+                        fetchTillEnd();
+                    } else
+                        stack.push(']');
                     break;
                 case '}':
                     if (getBracket(stack)) return buf.toString();
@@ -52,6 +61,10 @@ public class NestedReader {
                     } else
                         consume();
                     break;
+                case '\"':
+                case '\'':
+                    fetchTillEnd();
+                    break;
                 case -1:
                     return null;
                 case '\n':
@@ -64,6 +77,11 @@ public class NestedReader {
                     consume();
             }
         }
+    }
+
+    private void fetchTillEnd() throws IOException {
+        while (c != '\n')
+            consume();
     }
 
     private boolean getBracket(Stack<Character> stack) throws IOException {

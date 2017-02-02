@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.lang.System.exit;
+
 public class JavaREPL {
     public static final String GEN_SRC_PATH = "/tmp/repl/java/gen";
     public static final String GEN_OUT_PATH = "/tmp/repl/java/out";
@@ -42,6 +44,8 @@ public class JavaREPL {
                 String code = reader.getNestedString();
                 if (code == null)
                     break;
+                if(code.equals("^D"))
+                    exit(0);
                 code = printParsing(code);
                 File sourceFile = generateJavaSource(code, null);
 
