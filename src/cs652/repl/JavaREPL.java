@@ -14,8 +14,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static java.lang.System.exit;
 
@@ -208,19 +206,14 @@ public class JavaREPL {
     /**
      * Converting print to System.out.println
      *
-     * @param inputString
+     * @param input
      * @return
      */
-    private static String printParsing(String inputString) {
-        inputString = inputString.replaceAll("[\\t\\n\\r]", " ");
-        Pattern p = Pattern.compile("(print[^a-zA-Z])(.*);");
-        String input = inputString;
-        Matcher m = p.matcher(input);
-        if (m.find()) {
-            input = m.replaceFirst("System.out.println");  // number 46
-            inputString = input + "(" + m.group(2) + ");";
-        }
-        return inputString;
+    static String printParsing(String input) {
+        input = input
+                .replaceAll("[\\t\\n\\r]", " ")
+                .replaceAll("(print)\\s+([^;]+);", "System.out.println($2); ");
+        return input;
     }
 
 }
