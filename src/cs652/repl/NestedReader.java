@@ -52,11 +52,7 @@ public class NestedReader {
                         stack.push(']');
                     break;
                 case '}':
-                    if (getBracket(stack)) return buf.toString();
-                    break;
                 case ')':
-                    if (getBracket(stack)) return buf.toString();
-                    break;
                 case ']':
                     if (getBracket(stack)) return buf.toString();
                     break;
@@ -92,9 +88,10 @@ public class NestedReader {
     }
 
     private boolean getBracket(Stack<Character> stack) throws IOException {
-        if (c == stack.pop())
+        if (c == stack.peek()) {
+            stack.pop();
             consume();
-        else
+        } else
             return true;
         return false;
     }
