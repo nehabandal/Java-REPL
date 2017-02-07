@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static java.lang.System.exit;
-
 
 public class JavaREPL {
     public static final String GEN_SRC_PATH = "/tmp/repl/java/gen";
@@ -43,8 +41,6 @@ public class JavaREPL {
                 String code = reader.getNestedString();
                 if (code == null)
                     break;
-                if (code.equals("^D")) // this is not correct. ^D is the end of file signal which returns -1 from read; as far as I can tell this a dead code. please fix
-                    exit(0);
                 code = printParsing(code);
                 File sourceFile = generateJavaSource(code, null);
 
